@@ -1,0 +1,73 @@
+// Schema bazei de date (Prisma).
+// --------------------------------------------------------------------
+// LOCAL folosim SQLite (simplu, un singur fișier dev.db).
+// Pentru ONLINE (Vercel) schimbi doar provider-ul în "postgresql"
+// și DATABASE_URL în .env — restul rămâne la fel.
+// --------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Un "tip de produs" = un model concret pe care îl vede clientul.
+// Ex: "Fereastră fixă", "Ușă de interior 1 canat stânga" etc.
+model ProductType {
+  id          String   @id @default(cuid())
+  // Categoria: "FERESTRE" sau "USI"
+  category    String
+  // Numele afișat clientului
+  name        String
+  // Identificator din URL (ex: "fereastra-fixa"), unic
+  slug        String   @unique
+  // Descriere scurtă (opțional)
+  description String?
+  // Poză reprezentativă, salvată ca data-URL base64 (opțional)
+  imageData   String?
+  // Ordinea de afișare (mai mic = mai sus)
+  sortOrder   Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Variantele de preț (blocurile din fișierul XML) atașate acestui tip
+  variants PriceVariant[]
+
+  @@index([category])
+}
+
+// O "variantă de preț" = un bloc din fișierul XML.
+// Identificată prin combinația de atribute (tip, profil, culoare, ...).
+model PriceVariant {
+  id            String @id @default(cuid())
+  productTypeId String
+  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+
+  // Metadatele din antetul blocului
+  tip           String? // ex: "Fix"
+  profil        String? // ex: "Klass, K600"
+  culoare       String? // ex: "Alb"
+  feronerie     String? // ex: "-"
+  vitrare       String? // ex: "GT 24mm, AL/4S + Float (Bross)"
+  modelOfertare String? // ex: "M. fara demontaj"
+  dataText      String? // ex: "Thursday, July 30, 2026 (14:10)"
+
+  // Lățimile (coloanele), ca JSON: "[500,600,...,1500]"
+  widthsJson  String
+  // Înălțimile (rândurile), ca JSON: "[500,600,...,2400]"
+  heightsJson String
+  // Matricea de prețuri, ca JSON: "[[196.6, 220.9, ...], ...]"
+  // matrix[i][j] = prețul pentru heights[i] x widths[j]
+  matrixJson  String
+
+  // Numele fișierului sursă din care a fost importată
+  sourceFile String?
+
+  createdAt DateTime @default(now())
+
+  @@index([productTypeId])
+}

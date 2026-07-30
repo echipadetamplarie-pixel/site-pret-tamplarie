@@ -1,0 +1,22 @@
+# dependințe
+/node_modules
+
+# build Next.js
+/.next
+/out
+
+# bază de date locală SQLite
+/prisma/dev.db
+/prisma/dev.db-journal
+*.db
+*.db-journal
+
+# fișiere de mediu (secrete)
+.env
+.env.local
+.env*.local
+
+# diverse
+.DS_Store
+*.log
+/coverage
