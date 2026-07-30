@@ -80,9 +80,7 @@ Deschide în browser: <http://localhost:3000>
 Ai și butoanele **„Editează"** (nume, descriere, poză) și **„Șterge"**, plus **„+ Adaugă un tip nou"**.
 
 ### Fișier de exemplu
-În folderul `samples/` ai un fișier de test: `exemplu-fix.xml` (8 blocuri = 2 culori × 4 vitraje). Îl poți încărca pe modelul „Fereastră fixă" ca să vezi cum funcționează. Prețurile cunoscute din el: `500×500 = 196.60`, `600×500 = 220.90`.
-
-> Fișierul de exemplu e generat automat. Îl poți regenera cu: `npm run gen:sample`.
+În folderul `samples/` ai fișierul real de preț: `panou-fix-alb.xml` (panou fix, 8 blocuri = 2 culori × 4 vitraje). Îl poți încărca pe modelul „Fereastră fixă" ca să vezi cum funcționează. Prețuri cunoscute din el: `500×500 = 196.60`, `600×500 = 220.90` (Alb, GT 24mm Float).
 
 ---
 
@@ -168,7 +166,6 @@ Un bloc nou începe când reapare rândul `Tip`. Parserul:
 | `npm run build` | Compilează pentru producție |
 | `npm start` | Pornește varianta de producție |
 | `npm test` | Rulează testele automate |
-| `npm run gen:sample` | Regenerează fișierul XML de exemplu |
 
 ---
 
@@ -200,6 +197,6 @@ prisma/
   schema.prisma                   Structura bazei de date
   seed.ts                         Lista inițială de modele
 samples/
-  exemplu-fix.xml                 Fișier XML de test
+  panou-fix-alb.xml               Fișier XML real de preț (panou fix)
 tests/                            Teste automate (parser + preț)
 ```

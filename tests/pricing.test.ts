@@ -59,9 +59,9 @@ describe("computePrice — interpolare biliniară (grid simplu)", () => {
   });
 });
 
-describe("computePrice — pe datele reale din fișierul de exemplu", () => {
+describe("computePrice — pe datele reale din fișierul furnizat", () => {
   const sampleXml = readFileSync(
-    join(__dirname, "..", "samples", "exemplu-fix.xml"),
+    join(__dirname, "..", "samples", "panou-fix-alb.xml"),
     "utf8",
   );
   const block = parsePriceWorkbook(sampleXml)[0]; // Alb, prima vitrare

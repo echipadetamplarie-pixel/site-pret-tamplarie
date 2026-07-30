@@ -9,7 +9,6 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "gen:sample": "node scripts/generate-sample.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
