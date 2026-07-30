@@ -10,7 +10,7 @@ export const PRICING_CONFIG = {
   //  - true  => prețul din tabel se afișează ca atare (nu adăugăm TVA peste el).
   //             Putem doar arăta, informativ, ce parte din el reprezintă TVA-ul.
   //  - false => prețul din tabel e FĂRĂ TVA, iar noi adăugăm TVA-ul deasupra.
-  TVA_INCLUS: true,
+  TVA_INCLUS: false,
 
   // Cota de TVA în procente (ex: 19 sau 21).
   COTA_TVA: 21,

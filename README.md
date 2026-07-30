@@ -132,7 +132,7 @@ SQLite (fișierul local) **nu** funcționează pe Vercel, pentru că serverul nu
 
 - **Preț (monedă, TVA, adaos):** fișierul `src/config/pricing.ts`
   - `MONEDA` (implicit „lei")
-  - `TVA_INCLUS` (implicit `true` = prețurile din XML sunt finale)
+  - `TVA_INCLUS` (setat la `false` = prețurile din XML sunt fără TVA; TVA-ul se adaugă deasupra)
   - `COTA_TVA` (setat la `21`)
   - `ADAOS_PROCENT` (implicit `0` = fără adaos)
 - **Date de contact** (butonul „Cere ofertă"): fișierul `src/config/site.ts`
