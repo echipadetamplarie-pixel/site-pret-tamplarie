@@ -13,7 +13,7 @@ export const PRICING_CONFIG = {
   TVA_INCLUS: true,
 
   // Cota de TVA în procente (ex: 19 sau 21).
-  COTA_TVA: 19,
+  COTA_TVA: 21,
 
   // Adaos comercial global, în procente, aplicat peste prețul din tabel.
   //  0 = fără adaos. Ex: 10 => prețurile cresc cu 10%.
