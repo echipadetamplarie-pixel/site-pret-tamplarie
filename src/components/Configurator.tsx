@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { OptionGroup, AttributeKey } from "@/lib/variants";
 import { SITE_CONFIG } from "@/config/site";
-import { WindowDrawing } from "@/components/WindowDrawing";
+import { WindowDrawing, inferDrawing } from "@/components/WindowDrawing";
 
 interface Props {
   productTypeId: string;
@@ -182,6 +182,8 @@ export function Configurator({ productTypeId, productName, groups }: Props) {
             widthMm={Number(width)}
             heightMm={Number(height)}
             color={selection.culoare}
+            kind={inferDrawing(productName).kind}
+            hinge={inferDrawing(productName).hinge}
           />
         </div>
 
