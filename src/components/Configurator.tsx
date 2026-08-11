@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { OptionGroup, AttributeKey } from "@/lib/variants";
 import { SITE_CONFIG } from "@/config/site";
+import { WindowDrawing } from "@/components/WindowDrawing";
 
 interface Props {
   productTypeId: string;
@@ -174,6 +175,16 @@ export function Configurator({ productTypeId, productName, groups }: Props) {
       {/* Rezultatul */}
       <div className="card p-6">
         <h2 className="mb-4 text-lg font-semibold">Rezumat</h2>
+
+        {/* Desen orientativ al produsului, scalat după dimensiuni și culoare */}
+        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <WindowDrawing
+            widthMm={Number(width)}
+            heightMm={Number(height)}
+            color={selection.culoare}
+          />
+        </div>
+
         <ul className="space-y-1 text-sm text-gray-600">
           {groups.map((g) => (
             <li key={g.key}>
