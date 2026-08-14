@@ -110,10 +110,11 @@ export function WindowDrawing({
     }
   };
   const tilt = (key: string) => {
-    // vârf jos-centru (basculare pe balama de jos)
+    // Basculare: balamaua e JOS, muchia care se deschide e SUS.
+    // Simbolul standard = triunghi cu VÂRFUL SUS (baza jos, la balama).
     lines.push(
-      <line key={`${key}-a`} x1={gx} y1={gy} x2={gx + gw / 2} y2={gy + gh} stroke={symbol} strokeWidth={1.4} strokeDasharray="5 3" />,
-      <line key={`${key}-b`} x1={gx + gw} y1={gy} x2={gx + gw / 2} y2={gy + gh} stroke={symbol} strokeWidth={1.4} strokeDasharray="5 3" />,
+      <line key={`${key}-a`} x1={gx} y1={gy + gh} x2={gx + gw / 2} y2={gy} stroke={symbol} strokeWidth={1.4} strokeDasharray="5 3" />,
+      <line key={`${key}-b`} x1={gx + gw} y1={gy + gh} x2={gx + gw / 2} y2={gy} stroke={symbol} strokeWidth={1.4} strokeDasharray="5 3" />,
     );
   };
 
