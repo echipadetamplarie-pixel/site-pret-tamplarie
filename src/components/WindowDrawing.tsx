@@ -8,10 +8,11 @@
 //   - "oscilobatant" : canat oscilobatant (deschidere laterală + basculare)
 //   - "usa"          : ușă (canat înalt, cu mâner și prag)
 //
-//  Convenție: triunghiul format din diagonale are VÂRFUL spre balama.
-//   • balama stânga  -> vârf în stânga
-//   • balama dreapta -> vârf în dreapta
-//   • basculare (oscilo) -> vârf jos (balama de jos)
+//  Convenție: triunghiul format din diagonale are VÂRFUL spre muchia care
+//  se deschide (opusă balamalei); baza (latura desfăcută) e la balama.
+//   • balama stânga  -> vârf în dreapta
+//   • balama dreapta -> vârf în stânga
+//   • basculare (oscilo) -> vârf sus (balamaua e jos)
 // =====================================================================
 
 export type DrawingKind = "fix" | "canat" | "oscilobatant" | "usa";
@@ -96,16 +97,16 @@ export function WindowDrawing({
   const lines: React.ReactNode[] = [];
   const turn = (hg: Hinge, key: string) => {
     if (hg === "stanga") {
-      // vârf la mijloc-stânga (balama stânga)
-      lines.push(
-        <line key={`${key}-a`} x1={gx + gw} y1={gy} x2={gx} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
-        <line key={`${key}-b`} x1={gx + gw} y1={gy + gh} x2={gx} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
-      );
-    } else {
-      // vârf la mijloc-dreapta (balama dreapta)
+      // balama stânga -> vârf la mijloc-DREAPTA (muchia care se deschide)
       lines.push(
         <line key={`${key}-a`} x1={gx} y1={gy} x2={gx + gw} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
         <line key={`${key}-b`} x1={gx} y1={gy + gh} x2={gx + gw} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
+      );
+    } else {
+      // balama dreapta -> vârf la mijloc-STÂNGA (muchia care se deschide)
+      lines.push(
+        <line key={`${key}-a`} x1={gx + gw} y1={gy} x2={gx} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
+        <line key={`${key}-b`} x1={gx + gw} y1={gy + gh} x2={gx} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
       );
     }
   };
