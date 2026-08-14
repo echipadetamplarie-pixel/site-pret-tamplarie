@@ -177,19 +177,28 @@ export function WindowDrawing({
     const cx = sx + sashW; // muchia dreaptă a canatului
     const midY = gy + gh / 2;
     const midX = sx + sashW / 2;
+    // La UȘĂ simbolul e un TRAPEZ (muchie verticală scurtă pe partea care se
+    // deschide); la ferestre e triunghi (vârf într-un punct).
+    const kTrap = isDoor ? gh * 0.16 : 0;
     const drawTurn = () => {
+      const topY = midY - kTrap;
+      const botY = midY + kTrap;
       if (panel.hinge === "stanga") {
-        // balama stânga -> vârf la dreapta
+        // balama stânga -> se deschide spre dreapta (la cx)
         parts.push(
-          <line key={`${key}-t1`} x1={sx} y1={gy} x2={cx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
-          <line key={`${key}-t2`} x1={sx} y1={gy + gh} x2={cx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
+          <line key={`${key}-t1`} x1={sx} y1={gy} x2={cx} y2={topY} stroke={symbolColor} strokeWidth={1.4} />,
+          <line key={`${key}-t2`} x1={sx} y1={gy + gh} x2={cx} y2={botY} stroke={symbolColor} strokeWidth={1.4} />,
         );
+        if (kTrap > 0)
+          parts.push(<line key={`${key}-t3`} x1={cx} y1={topY} x2={cx} y2={botY} stroke={symbolColor} strokeWidth={1.4} />);
       } else {
-        // balama dreapta -> vârf la stânga
+        // balama dreapta -> se deschide spre stânga (la sx)
         parts.push(
-          <line key={`${key}-t1`} x1={cx} y1={gy} x2={sx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
-          <line key={`${key}-t2`} x1={cx} y1={gy + gh} x2={sx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
+          <line key={`${key}-t1`} x1={cx} y1={gy} x2={sx} y2={topY} stroke={symbolColor} strokeWidth={1.4} />,
+          <line key={`${key}-t2`} x1={cx} y1={gy + gh} x2={sx} y2={botY} stroke={symbolColor} strokeWidth={1.4} />,
         );
+        if (kTrap > 0)
+          parts.push(<line key={`${key}-t3`} x1={sx} y1={topY} x2={sx} y2={botY} stroke={symbolColor} strokeWidth={1.4} />);
       }
     };
     const drawTilt = () => {
