@@ -182,8 +182,8 @@ export function Configurator({ productTypeId, productName, groups }: Props) {
             widthMm={Number(width)}
             heightMm={Number(height)}
             color={selection.culoare}
-            kind={inferDrawing(productName).kind}
-            hinge={inferDrawing(productName).hinge}
+            panels={inferDrawing(productName).panels}
+            door={inferDrawing(productName).door}
           />
         </div>
 

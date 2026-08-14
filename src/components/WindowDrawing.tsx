@@ -1,55 +1,102 @@
 // =====================================================================
 //  Desen tehnic (SVG) al unei ferestre/uși, scalat după dimensiuni și
-//  colorat după culoarea aleasă. Suportă mai multe tipuri, cu simbolistica
-//  standard de tâmplărie (liniile diagonale indică sensul de deschidere):
+//  colorat după culoarea aleasă. Suportă unul sau mai multe canate
+//  (cu montant între ele), cu simbolistica standard de tâmplărie:
 //
 //   - "fix"          : panou fix (fără simbol de deschidere)
-//   - "canat"        : un canat cu deschidere pe balama (stânga/dreapta)
-//   - "oscilobatant" : canat oscilobatant (deschidere laterală + basculare)
-//   - "usa"          : ușă (canat înalt, cu mâner și prag)
+//   - "canat"        : canat rotativ (deschidere pe balama stânga/dreapta)
+//   - "oscilobatant" : canat oscilobatant (rotativ + basculare)
+//   - "usa"          : tratat ca un canat, dar cu prag jos și mâner
 //
-//  Convenție: triunghiul format din diagonale are VÂRFUL spre muchia care
-//  se deschide (opusă balamalei); baza (latura desfăcută) e la balama.
-//   • balama stânga  -> vârf în dreapta
-//   • balama dreapta -> vârf în stânga
-//   • basculare (oscilo) -> vârf sus (balamaua e jos)
+//  Convenție (ca în Fenestra): triunghiul are VÂRFUL spre muchia care se
+//  deschide (opusă balamalei); bascularea are vârful SUS (balamaua e jos).
 // =====================================================================
 
 export type DrawingKind = "fix" | "canat" | "oscilobatant" | "usa";
 export type Hinge = "stanga" | "dreapta";
 
+/** Un canat din cadru. */
+export interface Panel {
+  kind: DrawingKind;
+  hinge: Hinge;
+}
+
 interface Props {
   widthMm: number;
   heightMm: number;
   color?: string;
+  /** Canatele, de la stânga la dreapta. Dacă lipsește, se folosește kind/hinge. */
+  panels?: Panel[];
+  /** Adaugă prag jos + mâner (pentru uși). */
+  door?: boolean;
+  // Compatibilitate cu apelul simplu (un singur canat):
   kind?: DrawingKind;
   hinge?: Hinge;
 }
 
-/** Deduce tipul de desen și balamaua din numele modelului. */
-export function inferDrawing(name: string): { kind: DrawingKind; hinge: Hinge } {
+/**
+ * Deduce configurația de desen din numele modelului: câte canate, ce tip
+ * și pe ce parte sunt balamalele. Aproximativ, dar rezonabil vizual.
+ */
+export function inferDrawing(name: string): { panels: Panel[]; door: boolean } {
   const s = name
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
-  const hinge: Hinge = /\bstanga\b/.test(s) ? "stanga" : "dreapta";
+  const door = /\busa\b|\busi\b|balcon/.test(s);
+  const nameHinge: Hinge = /\bstanga\b/.test(s) ? "stanga" : "dreapta";
+  const openKind: DrawingKind = /oscilobatant/.test(s) ? "oscilobatant" : "canat";
+  const hasFix = /\bfix\b/.test(s);
 
-  let kind: DrawingKind = "canat";
-  if (/\busa\b|\busi\b|balcon/.test(s)) kind = "usa";
-  else if (/oscilobatant/.test(s)) kind = "oscilobatant";
-  else if (/\bfix\b|panou fix/.test(s)) kind = "fix";
+  // Număr de canate
+  let count = 1;
+  if (/\b3\s*canate|trei canate/.test(s)) count = 3;
+  else if (/\b2\s*canate|doua canate|dubl/.test(s)) count = 2;
 
-  return { kind, hinge };
+  let panels: Panel[];
+  if (count === 1) {
+    const kind: DrawingKind =
+      hasFix && !/canat|oscilobatant|usa|balcon/.test(s) ? "fix" : openKind;
+    panels = [{ kind, hinge: nameHinge }];
+  } else if (hasFix) {
+    // Un canat care se deschide (pe partea indicată), restul fixe.
+    panels = Array.from({ length: count }, () => ({
+      kind: "fix" as DrawingKind,
+      hinge: "stanga" as Hinge,
+    }));
+    const openIdx = nameHinge === "stanga" ? 0 : count - 1;
+    panels[openIdx] = { kind: openKind, hinge: nameHinge };
+  } else {
+    // Toate canatele se deschid; balamalele spre exterior.
+    panels = Array.from({ length: count }, (_, i) => ({
+      kind: openKind,
+      hinge: (i === 0
+        ? "stanga"
+        : i === count - 1
+          ? "dreapta"
+          : i % 2
+            ? "stanga"
+            : "dreapta") as Hinge,
+    }));
+  }
+
+  return { panels, door };
 }
 
 export function WindowDrawing({
   widthMm,
   heightMm,
   color = "Alb",
+  panels,
+  door,
   kind = "fix",
   hinge = "dreapta",
 }: Props) {
+  const resolved: Panel[] =
+    panels && panels.length ? panels : [{ kind, hinge }];
+  const isDoor = door ?? kind === "usa";
+
   const VB_W = 340;
   const VB_H = 250;
   const padL = 12;
@@ -61,8 +108,8 @@ export function WindowDrawing({
 
   const w = Number.isFinite(widthMm) && widthMm > 0 ? widthMm : 0;
   const h = Number.isFinite(heightMm) && heightMm > 0 ? heightMm : 0;
-  // Ușile au implicit o proporție înaltă dacă nu s-au dat dimensiuni.
-  const ratio = w > 0 && h > 0 ? w / h : kind === "usa" ? 0.45 : 3 / 4;
+  const defaultRatio = isDoor ? 0.5 : resolved.length >= 2 ? 1.1 : 3 / 4;
+  const ratio = w > 0 && h > 0 ? w / h : defaultRatio;
 
   let dw: number;
   let dh: number;
@@ -75,88 +122,134 @@ export function WindowDrawing({
   }
   const ox = padL + (areaW - dw) / 2;
   const oy = padT + (areaH - dh) / 2;
-  const t = Math.max(9, Math.min(dw, dh) * 0.075); // grosimea profilului
+  const t = Math.max(8, Math.min(dw, dh) * 0.06); // grosimea profilului
 
   const dark = /antracit|gri/i.test(color);
   const frame = dark ? "#3b4046" : "#eceff1";
   const frameHi = dark ? "#4a5158" : "#ffffff";
   const frameStroke = dark ? "#20242a" : "#aeb7c0";
-  const symbol = "#3f5666"; // culoarea liniilor de deschidere
+  const symbolColor = "#3f5666";
+  const handleColor = dark ? "#c7ccd1" : "#8a939c";
 
   const gx = ox + t;
   const gy = oy + t;
   const gw = dw - 2 * t;
   const gh = dh - 2 * t;
 
+  // Împărțim zona interioară în canate egale, cu montant între ele.
+  const N = resolved.length;
+  const mt = N > 1 ? Math.max(4, t * 0.9) : 0; // grosime montant
+  const sashW = (gw - (N - 1) * mt) / N;
+
+  const parts: React.ReactNode[] = [];
+
+  resolved.forEach((panel, i) => {
+    const sx = gx + i * (sashW + mt);
+    const key = `p${i}`;
+
+    // Geamul canatului
+    parts.push(
+      <rect
+        key={`${key}-glass`}
+        x={sx}
+        y={gy}
+        width={sashW}
+        height={gh}
+        rx={1.5}
+        fill="url(#glass-grad)"
+        stroke={frameStroke}
+        strokeWidth={1}
+      />,
+      <line
+        key={`${key}-refl`}
+        x1={sx + sashW * 0.2}
+        y1={gy + gh - 3}
+        x2={sx + sashW * 0.55}
+        y2={gy + 3}
+        stroke="#ffffff"
+        strokeWidth={5}
+        opacity={0.26}
+        strokeLinecap="round"
+      />,
+    );
+
+    // Simbolul de deschidere
+    const cx = sx + sashW; // muchia dreaptă a canatului
+    const midY = gy + gh / 2;
+    const midX = sx + sashW / 2;
+    const drawTurn = () => {
+      if (panel.hinge === "stanga") {
+        // balama stânga -> vârf la dreapta
+        parts.push(
+          <line key={`${key}-t1`} x1={sx} y1={gy} x2={cx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
+          <line key={`${key}-t2`} x1={sx} y1={gy + gh} x2={cx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
+        );
+      } else {
+        // balama dreapta -> vârf la stânga
+        parts.push(
+          <line key={`${key}-t1`} x1={cx} y1={gy} x2={sx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
+          <line key={`${key}-t2`} x1={cx} y1={gy + gh} x2={sx} y2={midY} stroke={symbolColor} strokeWidth={1.4} />,
+        );
+      }
+    };
+    const drawTilt = () => {
+      // basculare: vârf sus (balamaua e jos)
+      parts.push(
+        <line key={`${key}-k1`} x1={sx} y1={gy + gh} x2={midX} y2={gy} stroke={symbolColor} strokeWidth={1.4} strokeDasharray="5 3" />,
+        <line key={`${key}-k2`} x1={cx} y1={gy + gh} x2={midX} y2={gy} stroke={symbolColor} strokeWidth={1.4} strokeDasharray="5 3" />,
+      );
+    };
+    if (panel.kind === "canat" || panel.kind === "usa") drawTurn();
+    if (panel.kind === "oscilobatant") {
+      drawTurn();
+      drawTilt();
+    }
+
+    // Mâner (la ușă), pe muchia care se deschide (opusă balamalei)
+    if (isDoor && panel.kind !== "fix") {
+      const hxx =
+        panel.hinge === "stanga" ? sx + sashW - t * 0.7 : sx + t * 0.7;
+      parts.push(
+        <rect
+          key={`${key}-handle`}
+          x={hxx - 2}
+          y={midY - 12}
+          width={4}
+          height={24}
+          rx={2}
+          fill={handleColor}
+        />,
+      );
+    }
+
+    // Montantul dintre canate
+    if (i < N - 1) {
+      parts.push(
+        <rect
+          key={`${key}-mullion`}
+          x={sx + sashW}
+          y={oy}
+          width={mt}
+          height={dh}
+          fill={frame}
+          stroke={frameStroke}
+          strokeWidth={1}
+        />,
+      );
+    }
+  });
+
   const wLbl = w > 0 ? `${w} mm` : "— mm";
   const hLbl = h > 0 ? `${h} mm` : "— mm";
   const yDim = oy + dh + 20;
   const xDim = ox + dw + 30;
-
-  // --- Simbolurile de deschidere (peste geam) ---
-  const lines: React.ReactNode[] = [];
-  const turn = (hg: Hinge, key: string) => {
-    if (hg === "stanga") {
-      // balama stânga -> vârf la mijloc-DREAPTA (muchia care se deschide)
-      lines.push(
-        <line key={`${key}-a`} x1={gx} y1={gy} x2={gx + gw} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
-        <line key={`${key}-b`} x1={gx} y1={gy + gh} x2={gx + gw} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
-      );
-    } else {
-      // balama dreapta -> vârf la mijloc-STÂNGA (muchia care se deschide)
-      lines.push(
-        <line key={`${key}-a`} x1={gx + gw} y1={gy} x2={gx} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
-        <line key={`${key}-b`} x1={gx + gw} y1={gy + gh} x2={gx} y2={gy + gh / 2} stroke={symbol} strokeWidth={1.4} />,
-      );
-    }
-  };
-  const tilt = (key: string) => {
-    // Basculare: balamaua e JOS, muchia care se deschide e SUS.
-    // Simbolul standard = triunghi cu VÂRFUL SUS (baza jos, la balama).
-    lines.push(
-      <line key={`${key}-a`} x1={gx} y1={gy + gh} x2={gx + gw / 2} y2={gy} stroke={symbol} strokeWidth={1.4} strokeDasharray="5 3" />,
-      <line key={`${key}-b`} x1={gx + gw} y1={gy + gh} x2={gx + gw / 2} y2={gy} stroke={symbol} strokeWidth={1.4} strokeDasharray="5 3" />,
-    );
-  };
-
-  if (kind === "canat" || kind === "usa") turn(hinge, "turn");
-  if (kind === "oscilobatant") {
-    turn(hinge, "turn");
-    tilt("tilt");
-  }
-
-  // --- Elemente specifice ușii (mâner + prag) ---
-  const doorExtras: React.ReactNode[] = [];
-  if (kind === "usa") {
-    const handleOnRight = hinge === "stanga"; // mânerul e opus balamalei
-    const hxLocal = handleOnRight ? gx + gw - t * 0.6 : gx + t * 0.6;
-    doorExtras.push(
-      <rect
-        key="handle"
-        x={hxLocal - 2}
-        y={oy + dh / 2 - 12}
-        width={4}
-        height={24}
-        rx={2}
-        fill={dark ? "#c7ccd1" : "#8a939c"}
-      />,
-      <line
-        key="prag"
-        x1={ox}
-        y1={oy + dh - 1}
-        x2={ox + dw}
-        y2={oy + dh - 1}
-        stroke={frameStroke}
-        strokeWidth={2}
-      />,
-    );
-  }
+  const ariaTip = isDoor ? "ușă" : N > 1 ? `${N} canate` : "fereastră";
 
   return (
     <svg
       viewBox={`0 0 ${VB_W} ${VB_H}`}
       role="img"
-      aria-label={`Desen ${kind} ${wLbl} pe ${hLbl}`}
+      aria-label={`Desen ${ariaTip} ${wLbl} pe ${hLbl}`}
       className="h-auto w-full"
     >
       <defs>
@@ -167,20 +260,17 @@ export function WindowDrawing({
         </linearGradient>
       </defs>
 
-      {/* Rama exterioară (profilul) */}
+      {/* Rama exterioară (toc) */}
       <rect x={ox} y={oy} width={dw} height={dh} rx={4} fill={frame} stroke={frameStroke} strokeWidth={1.2} />
       <rect x={ox + 1.5} y={oy + 1.5} width={dw - 3} height={dh - 3} rx={3} fill="none" stroke={frameHi} strokeWidth={1} opacity={0.6} />
 
-      {/* Geamul */}
-      <rect x={gx} y={gy} width={gw} height={gh} rx={1.5} fill="url(#glass-grad)" stroke={frameStroke} strokeWidth={1} />
+      {/* Canatele (geam + simbol + montant + mâner) */}
+      {parts}
 
-      {/* Reflexii de sticlă */}
-      <line x1={gx + gw * 0.18} y1={gy + gh - 2} x2={gx + gw * 0.55} y2={gy + 2} stroke="#ffffff" strokeWidth={6} opacity={0.28} strokeLinecap="round" />
-      <line x1={gx + gw * 0.34} y1={gy + gh - 2} x2={gx + gw * 0.62} y2={gy + gh * 0.42} stroke="#ffffff" strokeWidth={3} opacity={0.22} strokeLinecap="round" />
-
-      {/* Simbolurile de deschidere + extra ușă */}
-      {lines}
-      {doorExtras}
+      {/* Prag (la ușă) */}
+      {isDoor && (
+        <line x1={ox} y1={oy + dh - 1} x2={ox + dw} y2={oy + dh - 1} stroke={frameStroke} strokeWidth={2.5} />
+      )}
 
       {/* Cotă lățime (jos) */}
       <g stroke="#94a3b8" strokeWidth={1}>
