@@ -19,6 +19,8 @@ export type Hinge = "stanga" | "dreapta";
 export interface Panel {
   kind: DrawingKind;
   hinge: Hinge;
+  /** La ușă: acest canat are mânerul (canatul activ). */
+  handle?: boolean;
 }
 
 interface Props {
@@ -81,6 +83,24 @@ export function inferDrawing(name: string): { panels: Panel[]; door: boolean } {
     }));
   }
 
+  // La ușă, mânerul (canatul activ) e pe un singur canat: pe partea indicată
+  // în nume (mâna dreaptă = canatul din dreapta), implicit dreapta.
+  if (door) {
+    const openIdxs = panels
+      .map((p, i) => ({ p, i }))
+      .filter((x) => x.p.kind !== "fix")
+      .map((x) => x.i);
+    if (openIdxs.length > 0) {
+      const handleIdx =
+        panels.length >= 2
+          ? nameHinge === "stanga"
+            ? openIdxs[0]
+            : openIdxs[openIdxs.length - 1]
+          : openIdxs[0];
+      panels[handleIdx] = { ...panels[handleIdx], handle: true };
+    }
+  }
+
   return { panels, door };
 }
 
@@ -96,6 +116,18 @@ export function WindowDrawing({
   const resolved: Panel[] =
     panels && panels.length ? panels : [{ kind, hinge }];
   const isDoor = door ?? kind === "usa";
+
+  // Dacă e ușă și niciun canat nu are mâner marcat, îl punem pe ultimul
+  // canat care se deschide (implicit pe dreapta).
+  const drawPanels = resolved.map((p) => ({ ...p }));
+  if (isDoor && !drawPanels.some((p) => p.handle)) {
+    for (let i = drawPanels.length - 1; i >= 0; i--) {
+      if (drawPanels[i].kind !== "fix") {
+        drawPanels[i].handle = true;
+        break;
+      }
+    }
+  }
 
   const VB_W = 340;
   const VB_H = 250;
@@ -137,13 +169,13 @@ export function WindowDrawing({
   const gh = dh - 2 * t;
 
   // Împărțim zona interioară în canate egale, cu montant între ele.
-  const N = resolved.length;
+  const N = drawPanels.length;
   const mt = N > 1 ? Math.max(4, t * 0.9) : 0; // grosime montant
   const sashW = (gw - (N - 1) * mt) / N;
 
   const parts: React.ReactNode[] = [];
 
-  resolved.forEach((panel, i) => {
+  drawPanels.forEach((panel, i) => {
     const sx = gx + i * (sashW + mt);
     const key = `p${i}`;
 
@@ -214,8 +246,8 @@ export function WindowDrawing({
       drawTilt();
     }
 
-    // Mâner (la ușă), pe muchia care se deschide (opusă balamalei)
-    if (isDoor && panel.kind !== "fix") {
+    // Mâner (la ușă), doar pe canatul activ (marcat cu handle)
+    if (isDoor && panel.handle) {
       const hxx =
         panel.hinge === "stanga" ? sx + sashW - t * 0.7 : sx + t * 0.7;
       parts.push(
