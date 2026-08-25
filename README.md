@@ -79,6 +79,9 @@ Deschide în browser: <http://localhost:3000>
 
 Ai și butoanele **„Editează"** (nume, descriere, poză) și **„Șterge"**, plus **„+ Adaugă un tip nou"**.
 
+### Desenul modelului
+La **„Editează"** ai secțiunea **„Desen"**: alegi **Tipul** (Automat / Panou fix / Canat / Oscilobatant / Ușă), **Nr. canate** (1–3) și **Mâna** (Stânga/Dreapta), cu **previzualizare live**. Pe „Automat", desenul se deduce din numele modelului; alegi un tip pentru control manual.
+
 ### Fișier de exemplu
 În folderul `samples/` ai fișierul real de preț: `panou-fix-alb.xml` (panou fix, 8 blocuri = 2 culori × 4 vitraje). Îl poți încărca pe modelul „Fereastră fixă" ca să vezi cum funcționează. Prețuri cunoscute din el: `500×500 = 196.60`, `600×500 = 220.90` (Alb, GT 24mm Float).
 

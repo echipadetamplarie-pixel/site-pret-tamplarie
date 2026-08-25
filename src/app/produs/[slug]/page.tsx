@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { buildOptionGroups, type VariantLike } from "@/lib/variants";
 import { Configurator } from "@/components/Configurator";
+import { resolveDrawing } from "@/components/WindowDrawing";
 
 // Pagina unui model: clientul alege opțiunile, introduce dimensiunile și vede prețul.
 export default async function ProductPage({
@@ -27,6 +28,14 @@ export default async function ProductPage({
     modelOfertare: v.modelOfertare,
   }));
   const groups = buildOptionGroups(variantLikes);
+
+  // Desenul: explicit (dacă adminul l-a setat) sau dedus din nume.
+  const drawing = resolveDrawing({
+    name: product.name,
+    drawKind: product.drawKind,
+    drawPanels: product.drawPanels,
+    drawHinge: product.drawHinge,
+  });
 
   const backHref = `/categorie/${product.category}`;
 
@@ -54,6 +63,8 @@ export default async function ProductPage({
           productTypeId={product.id}
           productName={product.name}
           groups={groups}
+          drawingPanels={drawing.panels}
+          drawingDoor={drawing.door}
         />
       )}
     </div>

@@ -21,6 +21,15 @@ export async function PATCH(
     data.imageData = body.imageData || null;
   if (typeof body.sortOrder === "number") data.sortOrder = body.sortOrder;
 
+  // Configurarea desenului
+  if ("drawKind" in body)
+    data.drawKind =
+      body.drawKind && body.drawKind !== "auto" ? String(body.drawKind) : null;
+  if ("drawPanels" in body)
+    data.drawPanels = body.drawPanels ? Number(body.drawPanels) : null;
+  if ("drawHinge" in body)
+    data.drawHinge = body.drawHinge ? String(body.drawHinge) : null;
+
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "Nimic de actualizat." }, { status: 400 });
   }

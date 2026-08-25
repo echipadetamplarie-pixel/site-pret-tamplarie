@@ -3,12 +3,15 @@
 import { useMemo, useState } from "react";
 import type { OptionGroup, AttributeKey } from "@/lib/variants";
 import { SITE_CONFIG } from "@/config/site";
-import { WindowDrawing, inferDrawing } from "@/components/WindowDrawing";
+import { WindowDrawing, type Panel } from "@/components/WindowDrawing";
 
 interface Props {
   productTypeId: string;
   productName: string;
   groups: OptionGroup[];
+  /** Desenul modelului (canate + ușă), calculat pe server. */
+  drawingPanels: Panel[];
+  drawingDoor: boolean;
 }
 
 // Tipul răspunsului de la /api/price (trebuie să corespundă cu server-ul)
@@ -30,7 +33,13 @@ interface PriceApiErr {
 }
 type PriceApi = PriceApiOk | PriceApiErr;
 
-export function Configurator({ productTypeId, productName, groups }: Props) {
+export function Configurator({
+  productTypeId,
+  productName,
+  groups,
+  drawingPanels,
+  drawingDoor,
+}: Props) {
   // Selecția inițială = prima valoare din fiecare grup
   const initialSelection = useMemo(() => {
     const s: Partial<Record<AttributeKey, string>> = {};
@@ -182,8 +191,8 @@ export function Configurator({ productTypeId, productName, groups }: Props) {
             widthMm={Number(width)}
             heightMm={Number(height)}
             color={selection.culoare}
-            panels={inferDrawing(productName).panels}
-            door={inferDrawing(productName).door}
+            panels={drawingPanels}
+            door={drawingDoor}
           />
         </div>
 

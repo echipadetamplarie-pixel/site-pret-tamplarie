@@ -104,6 +104,74 @@ export function inferDrawing(name: string): { panels: Panel[]; door: boolean } {
   return { panels, door };
 }
 
+/**
+ * Construiește desenul din alegerile EXPLICITE ale adminului
+ * (tip + număr de canate + mână), fără să depindă de nume.
+ */
+export function buildDrawing(
+  kind: DrawingKind,
+  count: number,
+  hand: Hinge,
+): { panels: Panel[]; door: boolean } {
+  const hinge: Hinge = hand === "stanga" ? "stanga" : "dreapta";
+  if (kind === "fix") return { panels: [{ kind: "fix", hinge }], door: false };
+
+  const door = kind === "usa";
+  const openKind: DrawingKind =
+    kind === "oscilobatant" ? "oscilobatant" : kind === "usa" ? "usa" : "canat";
+  const n = Math.min(3, Math.max(1, count || 1));
+
+  let panels: Panel[];
+  if (n === 1) {
+    panels = [{ kind: openKind, hinge }];
+  } else {
+    panels = Array.from({ length: n }, (_, i) => ({
+      kind: openKind,
+      hinge: (i === 0
+        ? "stanga"
+        : i === n - 1
+          ? "dreapta"
+          : i % 2
+            ? "stanga"
+            : "dreapta") as Hinge,
+    }));
+  }
+
+  if (door) {
+    const idxs = panels.map((_, i) => i).filter((i) => panels[i].kind !== "fix");
+    if (idxs.length > 0) {
+      const hi =
+        n >= 2 ? (hand === "stanga" ? idxs[0] : idxs[idxs.length - 1]) : idxs[0];
+      panels[hi] = { ...panels[hi], handle: true };
+    }
+  }
+  return { panels, door };
+}
+
+/** Configurație de desen salvată pe un model (opțională). */
+export interface DrawingConfig {
+  name: string;
+  drawKind?: string | null;
+  drawPanels?: number | null;
+  drawHinge?: string | null;
+}
+
+/**
+ * Alege desenul: dacă adminul a setat explicit tipul, îl folosește pe acela;
+ * altfel îl deduce din numele modelului.
+ */
+export function resolveDrawing(p: DrawingConfig): {
+  panels: Panel[];
+  door: boolean;
+} {
+  if (!p.drawKind || p.drawKind === "auto") return inferDrawing(p.name);
+  return buildDrawing(
+    p.drawKind as DrawingKind,
+    p.drawPanels ?? 1,
+    (p.drawHinge as Hinge) ?? "dreapta",
+  );
+}
+
 export function WindowDrawing({
   widthMm,
   heightMm,

@@ -17,6 +17,9 @@ export default async function AdminPage() {
     description: t.description,
     slug: t.slug,
     hasImage: !!t.imageData,
+    drawKind: t.drawKind,
+    drawPanels: t.drawPanels,
+    drawHinge: t.drawHinge,
     variantCount: t.variants.length,
     culori: Array.from(
       new Set(t.variants.map((v) => v.culoare).filter((x): x is string => !!x)),

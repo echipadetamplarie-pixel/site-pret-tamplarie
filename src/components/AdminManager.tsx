@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { WindowDrawing, resolveDrawing } from "@/components/WindowDrawing";
 
 export interface AdminType {
   id: string;
@@ -14,6 +15,9 @@ export interface AdminType {
   culori: string[];
   vitraje: string[];
   sourceFile: string | null;
+  drawKind: string | null;
+  drawPanels: number | null;
+  drawHinge: string | null;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -299,12 +303,30 @@ function EditForm({
   const [name, setName] = useState(t.name);
   const [description, setDescription] = useState(t.description ?? "");
   const [category, setCategory] = useState(t.category);
+  const [drawKind, setDrawKind] = useState(t.drawKind ?? "auto");
+  const [drawPanels, setDrawPanels] = useState(String(t.drawPanels ?? 1));
+  const [drawHinge, setDrawHinge] = useState(t.drawHinge ?? "dreapta");
   const [loading, setLoading] = useState(false);
+
+  // Previzualizarea desenului, actualizată live după alegeri
+  const preview = resolveDrawing({
+    name,
+    drawKind: drawKind === "auto" ? null : drawKind,
+    drawPanels: Number(drawPanels),
+    drawHinge,
+  });
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const body: Record<string, unknown> = { name, description, category };
+    const body: Record<string, unknown> = {
+      name,
+      description,
+      category,
+      drawKind,
+      drawPanels: Number(drawPanels),
+      drawHinge,
+    };
     const res = await fetch(`/api/admin/types/${t.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -372,6 +394,75 @@ function EditForm({
           className="text-sm"
         />
       </div>
+
+      {/* --- Desenul modelului --- */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <div className="mb-2 text-sm font-semibold text-gray-700">
+          Desen (cum arată în configurator)
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr,180px]">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="label">Tip</label>
+              <select
+                className="input"
+                value={drawKind}
+                onChange={(e) => setDrawKind(e.target.value)}
+              >
+                <option value="auto">Automat (după nume)</option>
+                <option value="fix">Panou fix</option>
+                <option value="canat">Canat</option>
+                <option value="oscilobatant">Oscilobatant</option>
+                <option value="usa">Ușă</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Nr. canate</label>
+              <select
+                className="input"
+                value={drawPanels}
+                onChange={(e) => setDrawPanels(e.target.value)}
+                disabled={drawKind === "auto" || drawKind === "fix"}
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Mâna / deschidere</label>
+              <select
+                className="input"
+                value={drawHinge}
+                onChange={(e) => setDrawHinge(e.target.value)}
+                disabled={drawKind === "auto" || drawKind === "fix"}
+              >
+                <option value="dreapta">Dreapta</option>
+                <option value="stanga">Stânga</option>
+              </select>
+            </div>
+          </div>
+          <div className="rounded-md border border-gray-200 bg-white p-2">
+            <WindowDrawing
+              widthMm={0}
+              heightMm={0}
+              color="Alb"
+              panels={preview.panels}
+              door={preview.door}
+            />
+            <p className="mt-1 text-center text-xs text-gray-400">
+              previzualizare
+            </p>
+          </div>
+        </div>
+        {drawKind === "auto" && (
+          <p className="mt-2 text-xs text-gray-500">
+            „Automat" deduce desenul din numele modelului. Alege un tip pentru
+            control manual.
+          </p>
+        )}
+      </div>
+
       <div className="flex gap-2">
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? "Se salvează..." : "Salvează"}
